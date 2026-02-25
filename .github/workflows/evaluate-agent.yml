@@ -9,6 +9,7 @@ env:
 jobs:
   evaluate:
     runs-on: ubuntu-latest
+    environment: evaluation
 
     steps:
       - name: Checkout agent repo
