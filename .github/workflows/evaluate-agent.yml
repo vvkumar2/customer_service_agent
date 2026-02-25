@@ -1,0 +1,46 @@
+name: Evaluate Agent
+
+on:
+  push:
+
+env:
+  AGENT_DIR: .
+
+jobs:
+  evaluate:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout agent repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+
+      - name: Install evaluation framework
+        run: pip install git+https://github.com/vvkumar2/evaluation-cd.git
+
+      - name: Install agent dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run evaluation pipeline
+        run: agent-eval run-pipeline --agent-dir $AGENT_DIR
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+          SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
+          SLACK_ESCALATION_CHANNEL_ID: ${{ secrets.SLACK_ESCALATION_CHANNEL_ID }}
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: tests/
