@@ -6,6 +6,10 @@ on:
 env:
   AGENT_DIR: .
 
+permissions:
+  checks: write
+  actions: read
+
 jobs:
   evaluate:
     runs-on: ubuntu-latest
@@ -32,6 +36,8 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Run evaluation pipeline
+        id: eval
+        continue-on-error: true
         run: agent-eval run-pipeline --agent-dir $AGENT_DIR
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -45,3 +51,37 @@ jobs:
         with:
           name: test-results
           path: tests/
+
+      - name: Create Check Run
+        if: always()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const passed = '${{ steps.eval.outputs.passed_tests }}' || '0';
+            const total = '${{ steps.eval.outputs.total_tests }}' || '0';
+            const passRate = '${{ steps.eval.outputs.pass_rate }}' || '0';
+            const conclusion = '${{ steps.eval.outcome }}' === 'success' ? 'success' : 'failure';
+            const htmlReport = '${{ steps.eval.outputs.html_report }}' || '';
+
+            // Build artifact URL for the HTML report
+            const artifactUrl = `${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}`;
+
+            await github.rest.checks.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              name: 'Agent Evaluation',
+              head_sha: context.sha,
+              status: 'completed',
+              conclusion: conclusion,
+              details_url: artifactUrl,
+              output: {
+                title: `${passRate}% pass rate (${passed}/${total} tests)`,
+                summary: conclusion === 'success'
+                  ? `All ${total} tests passed.`
+                  : `${passed} of ${total} tests passed (${passRate}%). 100% required.`,
+              }
+            });
+
+      - name: Fail if tests did not all pass
+        if: steps.eval.outcome != 'success'
+        run: exit 1
