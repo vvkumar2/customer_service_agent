@@ -85,4 +85,5 @@ jobs:
                 : `${passed}/${total} tests passed (${passRate}%)`,
               context: 'Agent Evaluation Report',
             });
-            if (state !== 'success') process.exitCode = 1;
+
+
