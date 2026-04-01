@@ -37,7 +37,6 @@ jobs:
         continue-on-error: true
         run: agent-eval run-pipeline --agent-dir .
         env:
-          AGENT_EVAL_MOCK: "true"  # TODO: Remove once workflow testing is done
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
           SLACK_TEAM_ID: ${{ secrets.SLACK_TEAM_ID }}
