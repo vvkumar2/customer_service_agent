@@ -80,9 +80,7 @@ jobs:
               sha: context.sha,
               state,
               target_url: '${{ steps.deploy.outputs.page_url }}',
-              description: state === 'success'
-                ? `All ${total} tests passed`
-                : `${passed}/${total} tests passed (${passRate}%)`,
+              description: `${passed}/${total} tests passed (${passRate}%)`,
               context: 'Agent Evaluation Report',
             });
 
